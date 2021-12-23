@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+<odoo>
+    
+<template id="web.external_layout_standard">
+    <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style">
+        <div class="row">
+            <div class="col-3 mb4">
+                <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="max-height: 45px;" alt="Logo"/>
+            </div>
+            <div class="col-9 text-right" style="margin-top:22px;" t-field="company.report_header" name="moto"/>
+        </div>
+        <div t-if="company.logo or company.report_header" class="row zero_min_height">
+            <div class="col-12">
+                <div style="border-bottom: 1px solid black;"/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6" name="company_address">
+                <div t-field="company.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: true}"/>
+            </div>
+        </div>
+    </div>
+
+    <div t-attf-class="article o_report_layout_standard o_company_#{company.id}_layout" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+        <div class="pt-5">
+            <!-- This div ensures that the address is not cropped by the header. -->
+            <t t-call="web.address_layout"/>
+        </div>
+        <t t-raw="0"/>
+    </div>
+
+    <div t-attf-class="footer o_standard_footer o_company_#{company.id}_layout" style="background: transparent;">
+        <div class="text-center" style="border-top: 1px solid black;">
+            <ul class="list-inline mb4">
+                <!-- using the list-inline-item class from bootstrap causes weird behaviours in pdf report
+                     adding d-inline class fixes the problem-->
+                <li t-if="company.phone" class="list-inline-item d-inline"><span t-field="company.phone"/></li>
+                <li t-if="company.email" class="list-inline-item d-inline"><span t-field="company.email"/></li>
+                <li t-if="company.website" class="list-inline-item d-inline"><span t-field="company.website"/></li>
+                <li t-if="company.vat" class="list-inline-item d-inline"><t t-esc="company.country_id.vat_label or 'Tax ID'"/>: <span t-field="company.vat"/></li>
+            </ul>
+
+            <div name="financial_infos">
+                <span t-field="company.report_footer"/>
+            </div>
+
+            <div t-if="report_type == 'pdf'" class="text-muted">
+                Page: <span class="page"/> / <span class="topage"/>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="web.internal_layout">
+    <t t-if="not o" t-set="o" t-value="doc"/>
+
+    <t t-if="not company">
+        <!-- Multicompany -->
+        <t t-if="company_id">
+            <t t-set="company" t-value="company_id"/>
+        </t>
+        <t t-elif="o and 'company_id' in o">
+            <t t-set="company" t-value="o.company_id.sudo()"/>
+        </t>
+        <t t-else="else">
+            <t t-set="company" t-value="res_company"/>
+        </t>
+    </t>
+
+    <div class="header">
+        <div class="row" width="100%">
+            <div class="col-4">
+                <div style="padding: 8px;"></div>
+                <div style="padding: 8px;">
+                    <span t-esc="doc.partner_id.name"/><br/>
+                    <span t-esc="doc.partner_id.phone"/><br/>
+                    <span t-esc="doc.partner_id.email"/>
+                </div>
+            </div>
+            <div class="col-4 text-center"></div>
+            <div class="col-4 mb8">
+                <div class="text-center" style="padding: 40px 8px 8px 8px;">
+                    <span t-field="doc.name"/>
+                </div>
+                <div class="row">
+                    <div class="col-6" style="padding: 50px 8px 8px 8px; font-size: 13px;">
+                        <span t-field="doc.date_order"/>
+                    </div>
+                    <div class="col-6" style="padding: 50px 8px 8px 8px; font-size: 13px;">
+                        <span t-field="doc.payment_term_id.name"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+      <t t-raw="0"/>
+    </div>
+    <div class="footer">
+        <div class="last-page">
+            <table width="100%">
+                <tr>
+                    <td rowspan="5" width="16.7%">
+                        <!-- <img t-att-src="'data:image/png;base64,%s' % to_text(doc.get_qr_code())"  style="width: 110px;height:110px;" alt="Barcode"/> -->
+                        <img t-if="doc.get_qr_code()" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s'%('QR', doc.get_qr_code(), 300, 300)" style="width: 105px;height:105px;"/>
+                    </td>
+                   <td width="71.7%"/>
+                    <td></td>
+                    <td class="text-right"><span t-field="doc.amount_untaxed"/></td>
+                </tr>
+                <tr>
+                    <td width="71.7%"/>
+                    <td></td>
+                    <td class="text-right"><br></br></td>
+                </tr>
+                <tr>
+                    <td width="71.7%"/>
+                    <td></td>
+                    <td class="text-right"><span t-field="doc.amount_tax"/></td>
+                </tr>
+                <tr>
+                    <td width="71.7%"/>
+                    <td></td>
+                    <td class="text-right"><span t-field="doc.amount_total"/></td>
+                </tr>
+            </table>
+        </div>
+        <table height="100%" width="100%" style="margin-top: 25px;">
+            <tr>
+                <td style="width: 12%;"></td>
+                <td style="width: 21%;"><span t-field="doc.warehouse_id"/></td>
+                <td style="width: 12%;"></td>
+                <td style="width: 21%;"><span t-field="doc.user_id"/></td>
+                <td style="width: 12%;"></td>
+                <td style="width: 22%;"></td>
+            </tr>
+        </table>
+    </div>
+    <script>
+        function subst() {
+            var vars = {};
+            var x = document.location.search.substring(1).split('&amp;');
+            for (var i in x) {
+                var z = x[i].split('=', 2);
+                vars[z[0]] = unescape(z[1]);
+            }
+            var x=['frompage', 'topage', 'page', 'webpage', 'section', 'subsection', 'subsubsection'];
+            for (var i in x) {
+                var y = document.getElementsByClassName(x[i]);
+                for (var j=0; j&lt;y.length; ++j)
+                    y[j].textContent = vars[x[i]];
+            }
+            var operations = {
+                'not-first-page': function (elt) {
+                    elt.style.visibility = (vars.page === vars.frompage) ? "hidden" : "visible";
+                },
+                'not-last-page': function (elt) {
+                    elt.style.visibility = (vars.page === vars.topage) ? "hidden" : "visible";
+                },
+                'first-page': function (elt) {
+                    elt.style.visibility = (vars.page === vars.frompage) ? "visible" : "hidden";
+                },
+                'last-page': function (elt) {
+                    elt.style.visibility = (vars.page === vars.topage) ? "visible" : "hidden";
+                },
+            };
+            for (var klass in operations) {
+                var y = document.getElementsByClassName(klass);
+                for (var j=0; j&lt;y.length; ++j)
+                    operations[klass](y[j]);
+            }
+        }
+    </script>
+</template>
+
+<template id="web.minimal_layout">
+        &lt;!DOCTYPE html&gt;
+        <t t-raw="'&lt;base href=%s&gt;' % base_url"/>
+        <html style="height: 0;">
+            <head>
+                <t t-call-assets="web.report_assets_pdf" t-js="false"/>
+                <t t-call-assets="web.report_assets_common" t-js="false"/>
+                <t t-call-assets="web.report_assets_pdf" t-css="false"/>
+                <meta charset="utf-8"/>
+                <t t-set="subst_needed" t-value="subst is True"/>
+                <t t-if="subst_needed">
+                    <script>
+                      function subst() {
+                          var vars = {};
+                          var x = document.location.search.substring(1).split('&amp;');
+                          for (var i in x) {
+                              var z = x[i].split('=', 2);
+                              vars[z[0]] = unescape(z[1]);
+                          }
+                          var x=['frompage', 'topage', 'page', 'webpage', 'section', 'subsection', 'subsubsection'];
+                          for (var i in x) {
+                              var y = document.getElementsByClassName(x[i]);
+                              for (var j=0; j&lt;y.length; ++j)
+                                  y[j].textContent = vars[x[i]];
+                          }
+                          var operations = {
+                              'not-first-page': function (elt) {
+                                  elt.style.visibility = (vars.page === vars.frompage) ? "hidden" : "visible";
+                              },
+                              'not-last-page': function (elt) {
+                                  elt.style.visibility = (vars.page === vars.topage) ? "hidden" : "visible";
+                              },
+                              'first-page': function (elt) {
+                                  elt.style.visibility = (vars.page === vars.frompage) ? "visible" : "hidden";
+                              },
+                              'last-page': function (elt) {
+                                  elt.style.visibility = (vars.page === vars.topage) ? "visible" : "hidden";
+                              },
+                          };
+                          for (var klass in operations) {
+                              var y = document.getElementsByClassName(klass);
+                              for (var j=0; j&lt;y.length; ++j)
+                                  operations[klass](y[j]);
+                          }
+                      }
+                    </script>
+
+
+
+                    <!--<script>
+                        function subst() {
+                            var vars = {};
+                            var x = document.location.search.substring(1).split('&amp;');
+                            for (var i in x) {
+                                var z = x[i].split('=', 2);
+                                vars[z[0]] = unescape(z[1]);
+                            }
+                            var x = ['sitepage', 'sitepages', 'section', 'subsection', 'subsubsection'];
+                            var z = {'sitepage': 'page', 'sitepages': 'topage'};
+                            for (var i in x) {
+                                var y = document.getElementsByClassName(z[x[i]] || x[i])
+                                for (var j=0; j&lt;y.length; ++j)
+                                    y[j].textContent = vars[x[i]];
+                            }
+
+                            var index = vars['webpage'].split('.', 4)[3];
+                            var header = document.getElementById('minimal_layout_report_headers');
+                            if(header !== null){
+                                var companyHeader = header.children[index];
+                                header.textContent = '';
+                                header.appendChild(companyHeader);
+                            }
+                            var footer = document.getElementById('minimal_layout_report_footers');
+                            if(footer !== null){
+                                var companyFooter = footer.children[index];
+                                footer.textContent = '';
+                                footer.appendChild(companyFooter);
+                            }
+                        }
+                    </script>-->
+                </t>
+            </head>
+            <body class="container" t-att-onload="subst_needed and 'subst()'">
+                <t t-raw="body"/>
+            </body>
+        </html>
+</template>
+
+</odoo>

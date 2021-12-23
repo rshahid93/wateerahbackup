@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+
+    <record model="ir.ui.view" id="view_journal_extended">
+        <field name="name">view.journal.extended</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref = "account.view_account_journal_form"/>
+        <field name="priority" eval="20"/>
+        <field name="arch" type="xml">
+            <field name="type" position="after">
+                <field name="create_cash_register" attrs="{'invisible': [('type', '!=', 'cash')]}"/>
+            </field>
+        </field>
+    </record>
+    
+</data>
+</odoo>
+
+
